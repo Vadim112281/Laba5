@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <title>Працівники (CRUD)</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f8f9fa;
+      padding: 20px;
+      margin: 0;
+    }
+  
+    .card {
+      margin-top: 20px;
+    }
+  </style>
+  
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container px-3">
+          <a class="navbar-brand" href="/">🏠</a>
+          <div>
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              <li class="nav-item">
+                <a class="nav-link active" href="/employees">Працівники</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/json">JSON</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+      
+
+  <div class="container">
+    <h1 class="text-center mb-4">Працівники</h1>
+
+    <div class="card">
+      <div class="card-header">Додати / Змінити працівника</div>
+      <div class="card-body">
+        <form id="employee-form">
+          <input type="hidden" id="_id" />
+          <div class="mb-3">
+            <input type="text" id="name" class="form-control" placeholder="Ім'я" required />
+          </div>
+          <div class="mb-3">
+            <input type="text" id="department" class="form-control" placeholder="Відділ" />
+          </div>
+          <div class="mb-3">
+            <input type="number" id="room" class="form-control" placeholder="Кімната" />
+          </div>
+          <div class="mb-3">
+            <input type="text" id="computer" class="form-control" placeholder="Комп'ютер" />
+          </div>
+          <button type="submit" class="btn btn-primary">Зберегти</button>
+          <button type="button" class="btn btn-secondary" onclick="resetForm()">Очистити</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Список працівників</div>
+      <ul id="employee-list" class="list-group list-group-flush"></ul>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = '/api/employees';
+
+    async function fetchEmployees() {
+      const res = await fetch(API_URL);
+      const employees = await res.json();
+      const list = document.getElementById('employee-list');
+      list.innerHTML = '';
+      employees.forEach(e => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+        li.innerHTML = `
+          <div>
+            <strong>${e.name}</strong> (${e.department || '—'}) — кімната ${e.room || '—'}, комп'ютер: ${e.computer || '—'}
+          </div>
+          <div>
+            <button class="btn btn-sm btn-warning me-2" onclick='editEmployee(${JSON.stringify(e)})'>✏️</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteEmployee('${e._id}')">🗑</button>
+          </div>
+        `;
+        list.appendChild(li);
+      });
+    }
+
+    async function deleteEmployee(id) {
+      await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+      fetchEmployees();
+      resetForm();
+    }
+
+    function editEmployee(emp) {
+      document.getElementById('_id').value = emp._id;
+      document.getElementById('name').value = emp.name;
+      document.getElementById('department').value = emp.department || '';
+      document.getElementById('room').value = emp.room || '';
+      document.getElementById('computer').value = emp.computer || '';
+    }
+
+    function resetForm() {
+      document.getElementById('employee-form').reset();
+      document.getElementById('_id').value = '';
+    }
+
+    document.getElementById('employee-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const _id = document.getElementById('_id').value;
+      const data = {
+        name: document.getElementById('name').value,
+        department: document.getElementById('department').value,
+        room: parseInt(document.getElementById('room').value),
+        computer: document.getElementById('computer').value
+      };
+
+      if (_id) {
+        await fetch(`${API_URL}/${_id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+      } else {
+        await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+      }
+
+      resetForm();
+      fetchEmployees();
+    });
+
+    fetchEmployees();
+  </script>
+</body>
+</html>
