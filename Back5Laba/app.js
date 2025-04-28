@@ -6,12 +6,23 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const employeeRoutes = require('./routes/employeeRoutes');
 
+const { graphqlHTTP } = require('express-graphql');
+const schema = require('./graphql/schema'); // нова схема
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
+
+
+// GraphQL Route
+app.use('/graphql', graphqlHTTP({
+  schema,
+  graphiql: true  // щоб відкривати інтерфейс браузером
+}));
+
 
 // API Routes
 app.use('/api/employees', employeeRoutes);
